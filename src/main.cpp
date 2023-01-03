@@ -12,7 +12,7 @@
 
 
 Adafruit_SSD1306 Display = Adafruit_SSD1306(SCREEN_WIDTH, SCREEN_HEIGHT);
-Circular_Gauge Gauge(gaugeMin, gaugeMax, true);
+Circular_Gauge Gauge(gaugeMin, gaugeMax);
 HX711 Probe;
 
 _lock_t loadLock;
@@ -26,10 +26,6 @@ int inc = 1;
 boolean increase = true;
 
 long lastLoad;
-
-
-// #define OLED_RESET 4
-// Adafruit_SSD1306 *display(OLED_RESET);
 
 
 
@@ -46,7 +42,7 @@ void ScreenUpdateTask( void * parameter) {
 
     // Serial.print("val: ");
     // Serial.println(val);
-    Gauge.drawGaugeData(val, val);
+    Gauge.drawGaugeData(val);
     vPortYield();
   }
 }
@@ -90,8 +86,7 @@ void setup()   {
   Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
 
 
-  // Gauge.begin(&Display);
-  Gauge.begin();
+  Gauge.begin(&Display);
 
   Probe.begin(26, 25, 128);
   Probe.set_scale(500);
