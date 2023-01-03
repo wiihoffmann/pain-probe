@@ -1,12 +1,17 @@
 #include <Arduino.h>
 #include <Circular_Gauge.h>
+#include <Wire.h>
 #include <HX711.h>
 
 
-#define gaugeMin -100
-#define gaugeMax 300
+#define gaugeMin -200
+#define gaugeMax 900
 
-Adafruit_SSD1306 Display;
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+
+Adafruit_SSD1306 Display = Adafruit_SSD1306(SCREEN_WIDTH, SCREEN_HEIGHT);
 Circular_Gauge Gauge(gaugeMin, gaugeMax, true);
 HX711 Probe;
 
@@ -40,12 +45,14 @@ void ScreenUpdateTask( void * parameter) {
     // Serial.println("released the lock");
 
     // Serial.print("val: ");
-    Serial.println(val);
-    Gauge.drawGaugeData(val);
+    // Serial.println(val);
+    Gauge.drawGaugeData(val, val);
     vPortYield();
   }
 }
 
+
+int16_t sweeper = 0;
 
 void mainTask(void * parameter){
   while(1){
@@ -56,9 +63,19 @@ void mainTask(void * parameter){
       lastLoad = Probe.get_units(1);
       _lock_release(&loadLock);
 
-      Serial.print("samples per second: ");
-      Serial.println(count / ((millis() - startTime) / (float)1000) );  
+      // Serial.print("samples per second: ");
+      // Serial.println(count / ((millis() - startTime) / (float)1000) );  
+      Serial.print("GOT: ");
+      Serial.println(lastLoad);
     }
+
+      // _lock_acquire(&loadLock);
+      // lastLoad = sweeper;
+      // _lock_release(&loadLock);  
+
+      // sweeper ++;
+      // if(sweeper > 300) sweeper = -100;
+      delay(10);
 
     vPortYield();
   }
@@ -69,15 +86,14 @@ void setup()   {
   Serial.begin(115200);
 
   _lock_init(&loadLock);
-  delay(2000);
-  Serial.println("here");
 
   Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
 
 
-  Gauge.begin(&Display);
+  // Gauge.begin(&Display);
+  Gauge.begin();
 
-  Probe.begin(26, 25, 60);
+  Probe.begin(26, 25, 128);
   Probe.set_scale(500);
   Probe.tare();
 
@@ -108,7 +124,7 @@ void setup()   {
 
 
 void loop() {
-  delay(500);
-  Serial.println("main loop");
+  // delay(500);
+  // Serial.println("main loop");
 }
 
