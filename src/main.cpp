@@ -1,119 +1,43 @@
 #include <Arduino.h>
-#include <Circular_Gauge.h>
-#include <Wire.h>
-#include <HX711.h>
+
+#include "FileManager.h"
 
 
-#define gaugeMin -200
-#define gaugeMax 900
-
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 64 // OLED display height, in pixels
-
-
-Adafruit_SSD1306 Display = Adafruit_SSD1306(SCREEN_WIDTH, SCREEN_HEIGHT);
-Circular_Gauge Gauge(gaugeMin, gaugeMax);
-HX711 Probe;
-
-_lock_t loadLock;
-
-TaskHandle_t ScreenUpdateTaskHandle;
-TaskHandle_t mainTaskHandle;
-
-uint32_t count = 0;
-uint32_t startTime;
-int inc = 1;
-boolean increase = true;
-
-long lastLoad;
-
-
-
-void ScreenUpdateTask( void * parameter) {
-  float val;
-  for(;;) {
-    //  Serial.println("trying to get lock");
-     _lock_acquire(&loadLock);
-      val = lastLoad;
-      // Serial.println("got the lock");
-    _lock_release(&loadLock);
-
-    // Serial.println("released the lock");
-
-    // Serial.print("val: ");
-    // Serial.println(val);
-    Gauge.drawGaugeData(val);
-    vPortYield();
-  }
-}
-
-
-int16_t sweeper = 0;
-
-void mainTask(void * parameter){
-  while(1){
-    // Serial.println("main task");
-    if(Probe.is_ready()){
-      count ++;
-      _lock_acquire(&loadLock);
-      lastLoad = Probe.get_units(1);
-      _lock_release(&loadLock);
-
-      // Serial.print("samples per second: ");
-      // Serial.println(count / ((millis() - startTime) / (float)1000) );  
-      Serial.print("GOT: ");
-      Serial.println(lastLoad);
-    }
-
-      // _lock_acquire(&loadLock);
-      // lastLoad = sweeper;
-      // _lock_release(&loadLock);  
-
-      // sweeper ++;
-      // if(sweeper > 300) sweeper = -100;
-      delay(10);
-
-    vPortYield();
-  }
-}
-
-
-void setup()   {                
+void setup(){     
   Serial.begin(115200);
+  delay(1000);
+  Serial.println("starting");
+  
+  FileManager mgr = FileManager();
+  
+  File one = mgr.makeFile(FileManager::fileFormat::PPT);
+  Serial.println("first file created");
+  File two = mgr.makeFile(FileManager::fileFormat::TS);
+  Serial.println("second file created");
+  File three = mgr.makeFile(FileManager::fileFormat::VAS);
+  Serial.println("third file created");
 
-  _lock_init(&loadLock);
+  uint32_t time = millis();
+  uint32_t bytes = 0;
+  while(millis() < time+1000){
+    one.write(bytes ++);
+  }
+  Serial.print("wrote ");
+  Serial.print(bytes);
+  Serial.println(" bytes in one second.");
 
-  Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
-
-
-  Gauge.begin(&Display);
-
-  Probe.begin(26, 25, 128);
-  Probe.set_scale(500);
-  Probe.tare();
-
-  startTime = millis();
+  Serial.print("free space: ");
+  Serial.println(SPIFFS.totalBytes());
+  Serial.println(SPIFFS.usedBytes());
+  Serial.println(one.size());
+  
+  one.seek(0);
+  while(one.available()){
+    Serial.print(one.read());
+    Serial.print(' ');
+  }
 
   
-
-  xTaskCreatePinnedToCore(
-      ScreenUpdateTask, /* Function to implement the task */
-      "screen task", /* Name of the task */
-      10000,  /* Stack size in words */
-      NULL,  /* Task input parameter */
-      1,  /* Priority of the task */
-      &ScreenUpdateTaskHandle,  /* Task handle. */
-      1); /* Core where the task should run */
-
-
-  xTaskCreatePinnedToCore(
-      mainTask, /* Function to implement the task */
-      "main task", /* Name of the task */
-      10000,  /* Stack size in words */
-      NULL,  /* Task input parameter */
-      1,  /* Priority of the task */
-      &mainTaskHandle,  /* Task handle. */
-      1); /* Core where the task should run */
 }
 
 
