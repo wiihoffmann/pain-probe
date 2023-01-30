@@ -1,3 +1,6 @@
+#include <Arduino.h>
+#include <HX711.h>
+
 class LoadCell {
     public:
         // This is how clients can access the single instance

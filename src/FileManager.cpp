@@ -82,3 +82,15 @@ void FileManager::getFileName(char* filename, fileFormat format, fileIndexType i
 }
 
 
+FileManager::fileIndexType FileManager::getFileCount(fileFormat format){
+    return fileIndexes[format];
+}
+
+
+File FileManager::openFile(fileFormat format, fileIndexType index){
+    char filename[1+sizeof(fileIndexType)+sizeof(dataFormatEnumType)];
+    getFileName(filename, format, index);
+
+    return SPIFFS.open(filename, FILE_READ);
+}
+

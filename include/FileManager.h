@@ -10,6 +10,8 @@ class FileManager{
         FileManager();
         File makeFile(fileFormat format);
         void deleteFiles();
+        fileIndexType getFileCount(fileFormat format);
+        File openFile(fileFormat format, fileIndexType index);
 
     private:
         static fileIndexType fileIndexes[dataFormatEnumSize];
@@ -19,3 +21,4 @@ class FileManager{
         void getFileName(char* filename, fileFormat format, fileIndexType index); 
 
 };
+

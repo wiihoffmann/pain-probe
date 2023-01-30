@@ -1,4 +1,3 @@
-#include <Arduino.h>
 #include "LoadCell.h"
 
 // Define the static Singleton pointer
